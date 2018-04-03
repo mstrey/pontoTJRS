@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
+// @supportURL   https://github.com/mstrey/pontoTJRS/issues
 // @version      1.0
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
