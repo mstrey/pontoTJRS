@@ -12,17 +12,26 @@
 // incluir o saldo final em uma linha de tabela no final da tabela
 
 var saldoPeriodo = 0;
+var usuariosHabilitados = new Map();
+usuariosHabilitados.set('mstrey@tj.rs.gov.br','3821838');
+usuariosHabilitados.set('rpbonfantti@tj.rs.gov.br','3477797');
 
 function setFields(){
-    document.getElementById("ponto-eletronico-search-txtmat").value = "3821838";// altere pelo seu número de matrícula
+
     $('#ponto-eletronico-search-dtini').datepicker( 'setDate', getFirstDayOfMonth(new Date()) );
     $('#ponto-eletronico-search-dtfim').datepicker( 'setDate', getLastDayOfMonth(new Date()) );
 
     $('#ponto-eletronico-search-btnconsultar').click(function(event) {
+        var email = document.getElementsByClassName("list-group-user")[0].childNodes[3].innerText.trim();
+        console.log(email);
+        var matricula = usuariosHabilitados.get(email);
+        console.log(matricula);
+        document.getElementById("ponto-eletronico-search-txtmat").value = matricula;
+
         if ($('#ponto-eletronico-search').valid()) {
             saldoPeriodo = 0;
 
-            var matricula = $('#ponto-eletronico-search-txtmat').val();
+            matricula = $('#ponto-eletronico-search-txtmat').val();
             var dataIni = $('#ponto-eletronico-search-dtini').val();
             var dataFim = $('#ponto-eletronico-search-dtfim').val();
 
@@ -42,7 +51,7 @@ function setFields(){
         }
     });
 
-    $('#ponto-eletronico-search-btnconsultar').click();
+//    $('#ponto-eletronico-search-btnconsultar').click();
 }
 
 function calculaSaldos(ajax){
@@ -82,7 +91,9 @@ function atualizaSaldo(linhaHora){
     var dia = linhaHora[0].innerText;
 
     var min0830 = (8*60)+30;
-    var min1730 = 17*60+30;
+    var min1730 = (17*60)+30;
+
+    var saidaSugerida = false;
 
     if(linhaHora[1].innerText.trim() == ""){
         linhaHora[1].innerText = "08:30";
@@ -103,13 +114,8 @@ function atualizaSaldo(linhaHora){
     }
 
     if(linhaHora[4].innerText.trim() == ""){
-        var hrSugest = "17:30";
-        if(saldoPeriodo < 0){
-            hrSugest = numToHora(min1730+(-saldoPeriodo));
-            saldoPeriodo = 0;
-        }
-
-        linhaHora[4].innerText = hrSugest;
+        saidaSugerida = true;
+        linhaHora[4].innerText = numToHora(min1730);
         linhaHora[4].style.color="red";
         linhaHora[4].style.fontWeight="bold";
     }
@@ -126,12 +132,9 @@ function atualizaSaldo(linhaHora){
     var saldoDia = (manha + tarde) - (8*60);
     if(almoco <= 60 && almoco >= 50){
         saldoDia += almoco-60;
-        console.log("almoco1: "+almoco+" / saldoDia: "+saldoDia);
     } else if(almoco <= 70 && almoco >= 60){
         saldoDia -= 60-almoco;
-        console.log("almoco2: "+almoco+" / saldoDia: "+saldoDia);
     } else if(almoco < 50 && (manha + tarde > (8*60))){
-        console.log("almoco3: "+almoco+" / saldoDia: "+saldoDia);
         if(almoco > saldoDia){
             saldoDia = 0;
         } else {
@@ -140,7 +143,15 @@ function atualizaSaldo(linhaHora){
     }
 
     saldoPeriodo += saldoDia;
-    console.log(dia+" : "+numToHora(manha)+" / "+numToHora(tarde)+" / "+numToHora(almoco)+" / "+numToHora(saldoDia)+" -> "+numToHora((saldoPeriodo)));
+
+    if(saidaSugerida && saldoPeriodo < 0){
+        console.log("saidaSugerida");
+        hrSugest = numToHora(min1730-saldoPeriodo);
+        linhaHora[4].innerText = hrSugest;
+        saldoDia = 0;
+        saldoPeriodo = 0;
+    }
+
     var hrSaldoDia = numToHora(saldoDia);
     var txtHr = createElement("text",{"id":dia+"-"+"5"},hrSaldoDia);
 
@@ -159,8 +170,6 @@ function getLastDayOfMonth(dt) {
     var result = new Date(dt.getFullYear(), dt.getMonth()+1, 0);
     return result;
 }
-
-document.addEventListener("DOMContentLoaded", setFields());
 
 function pegaHora(td){
     td.innerText.trim();
@@ -206,4 +215,4 @@ function numToHora(minutos) {
     return h+":"+m;
 }
 
-
+$(document).ready(setFields());
