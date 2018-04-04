@@ -2,7 +2,7 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.1
+// @version      1.2
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
@@ -13,7 +13,7 @@
 
 var saldoPeriodo = 0;
 var usuariosHabilitados = new Map();
-usuariosHabilitados.set('mstrey@tj.rs.gov.br','3821838');
+usuariosHabilitados.set('mstrey@tj.rs.gov.br','3477797');
 usuariosHabilitados.set('rpbonfantti@tj.rs.gov.br','3477797');
 
 function setFields(){
@@ -23,9 +23,7 @@ function setFields(){
 
     $('#ponto-eletronico-search-btnconsultar').click(function(event) {
         var email = document.getElementsByClassName("list-group-user")[0].childNodes[3].innerText.trim();
-        console.log(email);
         var matricula = usuariosHabilitados.get(email);
-        console.log(matricula);
         document.getElementById("ponto-eletronico-search-txtmat").value = matricula;
 
         if ($('#ponto-eletronico-search').valid()) {
@@ -89,6 +87,7 @@ function calculaSaldos(ajax){
 function atualizaSaldo(linhaHora){
 
     var dia = linhaHora[0].innerText;
+    console.log("dia: "+dia);
 
     var min0830 = (8*60)+30;
     var min1730 = (17*60)+30;
@@ -96,24 +95,28 @@ function atualizaSaldo(linhaHora){
     var saidaSugerida = false;
 
     if(linhaHora[1].innerText.trim() == ""){
+        console.log("sugere entrada");
         linhaHora[1].innerText = "08:30";
         linhaHora[1].style.color="red";
         linhaHora[1].style.fontWeight="bold";
     }
 
     if(linhaHora[2].innerText.trim() == ""){
+        console.log("sugere almini");
         linhaHora[2].innerText = "12:00";
         linhaHora[2].style.color="red";
         linhaHora[2].style.fontWeight="bold";
     }
 
     if(linhaHora[3].innerText.trim() == ""){
+        console.log("sugere almfim");
         linhaHora[3].innerText = "13:00";
         linhaHora[3].style.color="red";
         linhaHora[3].style.fontWeight="bold";
     }
 
     if(linhaHora[4].innerText.trim() == ""){
+        console.log("sugere saida");
         saidaSugerida = true;
         linhaHora[4].innerText = numToHora(min1730);
         linhaHora[4].style.color="red";
@@ -130,15 +133,21 @@ function atualizaSaldo(linhaHora){
     var almoco = diffHora(pt2,pt3);
 
     var saldoDia = (manha + tarde) - (8*60);
+
+    console.log("almoço: "+almoco);
+    console.log("saldoDia: "+saldoDia);
+
     if(almoco <= 60 && almoco >= 50){
+        console.log("saldo 1");
         saldoDia += almoco-60;
     } else if(almoco <= 70 && almoco >= 60){
+        console.log("saldo 2");
         saldoDia -= 60-almoco;
-    } else if(almoco < 50 && (manha + tarde > (8*60))){
-        if(almoco > saldoDia){
+    } else if(almoco < 50 && ((manha + tarde) > (8*60))){
+        console.log("saldo 3");
+        saldoDia = saldoDia-(60-almoco);
+        if(saldoDia < 0) {
             saldoDia = 0;
-        } else {
-            saldoDia = saldoDia - (60-almoco);
         }
     }
 
@@ -157,7 +166,7 @@ function atualizaSaldo(linhaHora){
 
     if(saldoDia < 0){
         txtHr.style.color="red";
-    } else {
+    } else if(saldoDia > 0){
         txtHr.style.color="blue";
     }
 
