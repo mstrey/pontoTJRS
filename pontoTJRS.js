@@ -14,6 +14,7 @@
 var saldoPeriodo = 0;
 var usuariosHabilitados = new Map();
 usuariosHabilitados.set('mstrey@tj.rs.gov.br','3821838');
+usuariosHabilitados.set('pablo@tj.rs.gov.br','3672808');
 usuariosHabilitados.set('rpbonfantti@tj.rs.gov.br','3477797');
 
 function setFields(){
