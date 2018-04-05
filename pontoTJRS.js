@@ -2,18 +2,21 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.2.2
+// @version      1.3
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
 // ==/UserScript==
-// todo-list:
-// incluir o saldo final em uma linha de tabela no final da tabela
 
 var saldoPeriodo = 0;
+var entradaSugerida = "09:00";
+var almIniSugerido = "12:00";
+var almFimSugerido = "13:00";
+var saidaSugerida = "18:00";
+
 var usuariosHabilitados = new Map();
-usuariosHabilitados.set('mstrey@tj.rs.gov.br','3821838');
+usuariosHabilitados.set('mstrey@tj.rs.gov.br','3477797');
 usuariosHabilitados.set('pablo@tj.rs.gov.br','3672808');
 usuariosHabilitados.set('rpbonfantti@tj.rs.gov.br','3477797');
 
@@ -56,23 +59,20 @@ function setFields(){
 function calculaSaldos(ajax){
     var htmlObject = createElement("div",{},"");
     htmlObject.innerHTML = ajax;
-
-    Array.from(htmlObject.getElementsByClassName("odd/even")).forEach(
+    var listaDias = htmlObject.getElementsByClassName("odd/even");
+    Array.from(listaDias).forEach(
         function(element, index, array) {
-            var tdList = element.getElementsByTagName('td');
-            var tdDate = tdList[0];
-            var date = tdDate.innerText;
+            var date = element.getElementsByTagName('td')[0].innerText;
 
-            for(i=1;i<=4;i++){
+            for(i=1;i<=element.lenght;i++){
                 var td = element.getElementsByTagName('td')[i];
                 td.id = date+"-"+i;
             }
-            var txtSaldo = atualizaSaldo(tdList);
-            var tdSaldo = createElement("td",{},"");
-            tdSaldo.appendChild(txtSaldo);
-            element.appendChild(tdSaldo);
+            var txtSaldo = atualizaSaldo(element);
+            addColuna(element, txtSaldo);
         }
     );
+
     var txtSaldoPeriodo = createElement("text",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
         txtSaldoPeriodo.style.color="red";
@@ -81,40 +81,72 @@ function calculaSaldos(ajax){
     }
     txtSaldoPeriodo.style.fontWeight="bold";
 
-    htmlObject.appendChild(txtSaldoPeriodo);
+    var tdSaldo = createElement("td",{},"");
+    tdSaldo.appendChild(txtSaldoPeriodo);
+
+    listaDias[0].parentNode.insertRow();
+    var trSaldo = listaDias[0].parentNode.lastChild;
+    trSaldo.insertCell().innerText = "";
+    trSaldo.insertCell().innerText = "";
+    trSaldo.insertCell().innerText = "";
+    trSaldo.insertCell().innerText = "";
+    trSaldo.insertCell().innerText = "Saldo final período:";
+    trSaldo.appendChild(tdSaldo);
+
+//    htmlObject.appendChild(trSaldo);
     return htmlObject;
 }
 
-function atualizaSaldo(linhaHora){
+function atualizaSaldo(linhaDOM){
 
-    var dia = linhaHora[0].innerText;
+    var linhaHora = linhaDOM.getElementsByTagName('td');
 
-    var min0830 = (8*60)+30;
-    var min1730 = (17*60)+30;
+    var dia = linhaHora[0].innerText.trim();
+    var entrada = linhaHora[1].innerText.trim();
+    if (linhaHora[2] == null) { addColuna(linhaDOM, ""); }
+    if (linhaHora[3] == null) { addColuna(linhaDOM, ""); }
+    if (linhaHora[4] == null) { addColuna(linhaDOM, ""); }
+    var almIni = linhaHora[2].innerText.trim();
+    var almFim = linhaHora[3].innerText.trim();
+    var saida = linhaHora[4].innerText.trim();
 
-    var saidaSugerida = false;
+    if(horaToNum(entrada) > (11*60)){
+        saida = almFim;
+        almFim = almIni;
+        almIni = entrada;
+        entrada = entradaSugerida;
+        linhaHora[1].innerText = entradaSugerida;
+        linhaHora[1].style.color="red";
+        linhaHora[1].style.fontWeight="bold";
+    }
+
+    linhaHora[2].innerText = almIni;
+    linhaHora[3].innerText = almFim;
+    linhaHora[4].innerText = saida;
+
+    var sugereSaida = false;
 
     if(linhaHora[1].innerText.trim() == ""){
-        linhaHora[1].innerText = "08:30";
+        linhaHora[1].innerText = entradaSugerida;
         linhaHora[1].style.color="red";
         linhaHora[1].style.fontWeight="bold";
     }
 
     if(linhaHora[2].innerText.trim() == ""){
-        linhaHora[2].innerText = "12:00";
+        linhaHora[2].innerText = almIniSugerido;
         linhaHora[2].style.color="red";
         linhaHora[2].style.fontWeight="bold";
     }
 
     if(linhaHora[3].innerText.trim() == ""){
-        linhaHora[3].innerText = "13:00";
+        linhaHora[3].innerText = almFimSugerido;
         linhaHora[3].style.color="red";
         linhaHora[3].style.fontWeight="bold";
     }
 
     if(linhaHora[4].innerText.trim() == ""){
-        saidaSugerida = true;
-        linhaHora[4].innerText = numToHora(min1730);
+        sugereSaida = true;
+        linhaHora[4].innerText = saidaSugerida;
         linhaHora[4].style.color="red";
         linhaHora[4].style.fontWeight="bold";
     }
@@ -143,9 +175,8 @@ function atualizaSaldo(linhaHora){
 
     saldoPeriodo += saldoDia;
 
-    if(saidaSugerida && saldoPeriodo < 0){
-        hrSugest = numToHora(min1730-saldoPeriodo);
-        linhaHora[4].innerText = hrSugest;
+    if(sugereSaida && saldoPeriodo < 0){
+        linhaHora[4].innerText = numToHora(horaToNum(saidaSugerida)-saldoPeriodo);
         saldoDia = 0;
         saldoPeriodo = 0;
     }
@@ -211,6 +242,20 @@ function numToHora(minutos) {
     var m = ("0" + Math.abs((minutos-(h*60)))).slice(-2);
 
     return h+":"+m;
+}
+
+function horaToNum(hora) {
+    var minutos = parseInt(hora.substring(3,5));
+    minutos += parseInt(hora.substring(0,2))*60;
+
+    return minutos;
+}
+
+function addColuna(linha, texto) {
+    var txt = createElement("text",{},texto);
+    var td = createElement("td",{},"");
+    td.appendChild(txt);
+    linha.appendChild(td);
 }
 
 $(document).ready(setFields());
