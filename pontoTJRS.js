@@ -2,7 +2,7 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.3
+// @version      1.3.1
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
@@ -16,7 +16,7 @@ var almFimSugerido = "13:00";
 var saidaSugerida = "18:00";
 
 var usuariosHabilitados = new Map();
-usuariosHabilitados.set('mstrey@tj.rs.gov.br','3477797');
+usuariosHabilitados.set('mstrey@tj.rs.gov.br','3821838');
 usuariosHabilitados.set('pablo@tj.rs.gov.br','3672808');
 usuariosHabilitados.set('rpbonfantti@tj.rs.gov.br','3477797');
 
