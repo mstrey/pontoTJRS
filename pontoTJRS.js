@@ -74,6 +74,7 @@ function calculaSaldos(ajax){
     );
 
     var txtSaldoPeriodo = createElement("text",{},numToHora(saldoPeriodo));
+    var txtLabelSaldoPeriodo = createElement("text",{},"Saldo final período:");
     if(saldoPeriodo < 0){
         txtSaldoPeriodo.style.color="red";
     } else {
@@ -83,14 +84,15 @@ function calculaSaldos(ajax){
 
     var tdSaldo = createElement("td",{},"");
     tdSaldo.appendChild(txtSaldoPeriodo);
+    var tdLabelSaldo = createElement("td",{"colspan":"3"},"");
+    tdLabelSaldo.appendChild(txtLabelSaldoPeriodo);
 
     listaDias[0].parentNode.insertRow();
     var trSaldo = listaDias[0].parentNode.lastChild;
     trSaldo.insertCell().innerText = "";
     trSaldo.insertCell().innerText = "";
-    trSaldo.insertCell().innerText = "";
-    trSaldo.insertCell().innerText = "";
-    trSaldo.insertCell().innerText = "Saldo final período:";
+
+    trSaldo.appendChild(tdLabelSaldo);
     trSaldo.appendChild(tdSaldo);
 
 //    htmlObject.appendChild(trSaldo);
