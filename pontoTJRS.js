@@ -2,7 +2,7 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.3.2
+// @version      1.3.3
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
@@ -114,7 +114,7 @@ function atualizaSaldo(linhaDOM){
 
     var dia = linhaHora[0].innerText.trim();
 
-    if(linhaHora.length > 5){
+    if(linhaHora[5] != null && linhaHora[5].innerText.trim() != ''){
         throw "Muitos registros no dia "+dia+". Atualizacao de saldos abortada.";
     }
 
