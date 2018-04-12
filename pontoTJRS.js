@@ -2,7 +2,7 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.3.1
+// @version      1.3.2
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
@@ -46,7 +46,11 @@ function setFields(){
                     'dataFinal': dataFim
                 },
                 function(response) {
-                    $('#ponto-eletronico-result').html(calculaSaldos(response));
+                    try{
+                        $('#ponto-eletronico-result').html(calculaSaldos(response));
+                    }catch(e){
+                        $('#ponto-eletronico-result').html(response);
+                    }
                 }
             );
 
@@ -68,13 +72,19 @@ function calculaSaldos(ajax){
                 var td = element.getElementsByTagName('td')[i];
                 td.id = date+"-"+i;
             }
-            var txtSaldo = atualizaSaldo(element);
+            var txtSaldo;
+            try {
+                txtSaldo = atualizaSaldo(element);
+            } catch(e){
+                alert(e);
+                throw BreakException;
+            }
+
             addColuna(element, txtSaldo);
         }
     );
 
     var txtSaldoPeriodo = createElement("text",{},numToHora(saldoPeriodo));
-    var txtLabelSaldoPeriodo = createElement("text",{},"Saldo final período:");
     if(saldoPeriodo < 0){
         txtSaldoPeriodo.style.color="red";
     } else {
@@ -84,15 +94,14 @@ function calculaSaldos(ajax){
 
     var tdSaldo = createElement("td",{},"");
     tdSaldo.appendChild(txtSaldoPeriodo);
-    var tdLabelSaldo = createElement("td",{"colspan":"3"},"");
-    tdLabelSaldo.appendChild(txtLabelSaldoPeriodo);
 
     listaDias[0].parentNode.insertRow();
     var trSaldo = listaDias[0].parentNode.lastChild;
     trSaldo.insertCell().innerText = "";
     trSaldo.insertCell().innerText = "";
-
-    trSaldo.appendChild(tdLabelSaldo);
+    trSaldo.insertCell().innerText = "";
+    trSaldo.insertCell().innerText = "";
+    trSaldo.insertCell().innerText = "Saldo final período:";
     trSaldo.appendChild(tdSaldo);
 
 //    htmlObject.appendChild(trSaldo);
@@ -104,6 +113,11 @@ function atualizaSaldo(linhaDOM){
     var linhaHora = linhaDOM.getElementsByTagName('td');
 
     var dia = linhaHora[0].innerText.trim();
+
+    if(linhaHora.length > 5){
+        throw "Muitos registros no dia "+dia+". Atualizacao de saldos abortada.";
+    }
+
     var entrada = linhaHora[1].innerText.trim();
     if (linhaHora[2] == null) { addColuna(linhaDOM, ""); }
     if (linhaHora[3] == null) { addColuna(linhaDOM, ""); }
