@@ -66,34 +66,23 @@ function calculaSaldos(ajax){
     var listaDias = htmlObject.getElementsByClassName("odd/even");
     Array.from(listaDias).forEach(
         function(element, index, array) {
-            var date = element.getElementsByTagName('td')[0].innerText;
+            var tdSaldoDiario = atualizaSaldo(element);
 
-            for(i=1;i<=element.lenght;i++){
-                var td = element.getElementsByTagName('td')[i];
-                td.id = date+"-"+i;
-            }
-            var txtSaldo;
-            try {
-                txtSaldo = atualizaSaldo(element);
-            } catch(e){
-                alert(e);
-                throw BreakException;
+            while(element.children.length > 5){
+                element.removeChild(element.lastChild);
             }
 
-            addColuna(element, txtSaldo);
+            element.appendChild(tdSaldoDiario);
         }
     );
 
-    var txtSaldoPeriodo = createElement("text",{},numToHora(saldoPeriodo));
+    var tdSaldo = createElement("td",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
-        txtSaldoPeriodo.style.color="red";
+        tdSaldo.style.color="red";
     } else {
-        txtSaldoPeriodo.style.color="blue";
+        tdSaldo.style.color="blue";
     }
-    txtSaldoPeriodo.style.fontWeight="bold";
-
-    var tdSaldo = createElement("td",{},"");
-    tdSaldo.appendChild(txtSaldoPeriodo);
+    tdSaldo.style.fontWeight="bold";
 
     listaDias[0].parentNode.insertRow();
     var trSaldo = listaDias[0].parentNode.lastChild;
@@ -115,7 +104,8 @@ function atualizaSaldo(linhaDOM){
     var dia = linhaHora[0].innerText.trim();
 
     if(linhaHora[5] != null && linhaHora[5].innerText.trim() != ''){
-        throw "Muitos registros no dia "+dia+". Atualizacao de saldos abortada.";
+        linhaHora[4].innerText = linhaHora[5].innerText.trim();
+        linhaHora[5].innerText = "";
     }
 
     var entrada = linhaHora[1].innerText.trim();
@@ -198,7 +188,7 @@ function atualizaSaldo(linhaDOM){
     }
 
     var hrSaldoDia = numToHora(saldoDia);
-    var txtHr = createElement("text",{"id":dia+"-"+"5"},hrSaldoDia);
+    var txtHr = createElement("td",{"id":dia+"-"+"5"},hrSaldoDia);
 
     if(saldoDia < 0){
         txtHr.style.color="red";
@@ -265,13 +255,6 @@ function horaToNum(hora) {
     minutos += parseInt(hora.substring(0,2))*60;
 
     return minutos;
-}
-
-function addColuna(linha, texto) {
-    var txt = createElement("text",{},texto);
-    var td = createElement("td",{},"");
-    td.appendChild(txt);
-    linha.appendChild(td);
 }
 
 $(document).ready(setFields());
