@@ -2,11 +2,12 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.5
+// @version      1.5.1
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
+//
 // ==/UserScript==
 
 var matricula;
@@ -86,6 +87,7 @@ function calculaSaldos(ajax){
         }
     );
 
+    var tdLabelSaldo = createElement("td",{'colspan':'3'},"Saldo final período:");
     var tdSaldo = createElement("td",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
         tdSaldo.style.color="red";
@@ -98,9 +100,7 @@ function calculaSaldos(ajax){
     var trSaldo = listaDias[0].parentNode.lastChild;
     trSaldo.insertCell().innerText = "";
     trSaldo.insertCell().innerText = "";
-    trSaldo.insertCell().innerText = "";
-    trSaldo.insertCell().innerText = "";
-    trSaldo.insertCell().innerText = "Saldo final período:";
+    trSaldo.appendChild(tdLabelSaldo);
     trSaldo.appendChild(tdSaldo);
 
 //    htmlObject.appendChild(trSaldo);
