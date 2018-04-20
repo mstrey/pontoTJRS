@@ -2,32 +2,40 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.4
+// @version      1.5
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
 // ==/UserScript==
 
+var matricula;
 var saldoPeriodo = 0;
 var entradaSugerida = "09:00";
 var almIniSugerido = "12:00";
 var almFimSugerido = "13:00";
 var saidaSugerida = "18:00";
 
-var usuariosHabilitados = new Map();
-usuariosHabilitados.set('mstrey@tj.rs.gov.br','3821838');
-usuariosHabilitados.set('pablo@tj.rs.gov.br','3672808');
-usuariosHabilitados.set('rpbonfantti@tj.rs.gov.br','3477797');
+var pontosSugeridos = 0;
 
 function setFields(){
 
+    if (typeof(Storage) !== "undefined") {
+        document.getElementById("ponto-eletronico-search-txtmat").value = localStorage.getItem("matricula");
+        matricula = localStorage.getItem("matricula");
+    }
     $('#ponto-eletronico-search-dtini').datepicker( 'setDate', getFirstDayOfMonth(new Date()) );
     $('#ponto-eletronico-search-dtfim').datepicker( 'setDate', getLastDayOfMonth(new Date()) );
 
     $('#ponto-eletronico-search-btnconsultar').click(function(event) {
-        var email = document.getElementsByClassName("list-group-user")[0].childNodes[3].innerText.trim();
-        var matricula = usuariosHabilitados.get(email);
+    	matricula = document.getElementById("ponto-eletronico-search-txtmat").value;
+        if (typeof(Storage) !== "undefined") {
+        	if (matricula == "") {
+        		matricula = localStorage.getItem("matricula");
+			} else {
+				localStorage.setItem("matricula", matricula);
+			}
+    	}
         document.getElementById("ponto-eletronico-search-txtmat").value = matricula;
 
         if ($('#ponto-eletronico-search').valid()) {
@@ -57,7 +65,9 @@ function setFields(){
         }
     });
 
-//    $('#ponto-eletronico-search-btnconsultar').click();
+    if(matricula != null && matricula > 0){
+       $('#ponto-eletronico-search-btnconsultar').click();
+    }
 }
 
 function calculaSaldos(ajax){
@@ -99,11 +109,13 @@ function calculaSaldos(ajax){
 
 function atualizaSaldo(linhaDOM){
 
+    var pontoExcedente = 0;
     var linhaHora = linhaDOM.getElementsByTagName('td');
 
     var dia = linhaHora[0].innerText.trim();
 
     if(linhaHora[5] != null && linhaHora[5].innerText.trim() != ''){
+        pontoExcedente = linhaHora[4].innerText.trim();
         linhaHora[4].innerText = linhaHora[5].innerText.trim();
         linhaHora[5].innerText = "";
     }
@@ -124,6 +136,7 @@ function atualizaSaldo(linhaDOM){
         linhaHora[1].innerText = entradaSugerida;
         linhaHora[1].style.color="red";
         linhaHora[1].style.fontWeight="bold";
+		pontosSugeridos += 1;
     }
 
     linhaHora[2].innerText = almIni;
@@ -136,18 +149,21 @@ function atualizaSaldo(linhaDOM){
         linhaHora[1].innerText = entradaSugerida;
         linhaHora[1].style.color="red";
         linhaHora[1].style.fontWeight="bold";
+		pontosSugeridos += 1;
     }
 
     if(linhaHora[2].innerText.trim() == ""){
         linhaHora[2].innerText = almIniSugerido;
         linhaHora[2].style.color="red";
         linhaHora[2].style.fontWeight="bold";
+		pontosSugeridos += 1;
     }
 
     if(linhaHora[3].innerText.trim() == ""){
         linhaHora[3].innerText = almFimSugerido;
         linhaHora[3].style.color="red";
         linhaHora[3].style.fontWeight="bold";
+   		pontosSugeridos += 1;
     }
 
     if(linhaHora[4].innerText.trim() == ""){
@@ -155,6 +171,7 @@ function atualizaSaldo(linhaDOM){
         linhaHora[4].innerText = saidaSugerida;
         linhaHora[4].style.color="red";
         linhaHora[4].style.fontWeight="bold";
+		pontosSugeridos += 1;
     }
 
     var pt1 = linhaHora[1].innerText.trim();
@@ -188,17 +205,30 @@ function atualizaSaldo(linhaDOM){
     }
 
     var hrSaldoDia = numToHora(saldoDia);
-    var txtHr = createElement("td",{"id":dia+"-"+"5"},hrSaldoDia);
 
-    if(saldoDia < 0){
-        txtHr.style.color="red";
-    } else if(saldoDia > 0){
-        txtHr.style.color="blue";
+    var iconFavorito;
+    if(pontoExcedente){
+        hrSaldoDia = hrSaldoDia;
+        iconFavorito = createElement("i",{"class":"fa fa-star"},"");
     }
 
-    txtHr.style.fontWeight="bold";
+    var txtSaldoDia = createElement("text",{"id":dia+"-txt"+"5"},hrSaldoDia);
+    var tdSaldoDia = createElement("td",{"id":dia+"-"+"5"},txtSaldoDia);
 
-    return txtHr;
+    if(pontoExcedente){
+        tdSaldoDia.setAttribute('title','Ponto excedente ignorado nos cálculos: ' + pontoExcedente);
+        tdSaldoDia.appendChild(iconFavorito);
+    }
+
+    if(saldoDia < 0){
+        tdSaldoDia.style.color="red";
+    } else if(saldoDia > 0){
+        tdSaldoDia.style.color="blue";
+    }
+
+    tdSaldoDia.style.fontWeight="bold";
+
+    return tdSaldoDia;
 }
 
 function getLastDayOfMonth(dt) {
