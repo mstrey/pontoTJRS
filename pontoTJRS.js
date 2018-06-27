@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Ponto Eletr√¥nico TJRS
+// @name         Ponto EletrÙnico TJRS (DEV)
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.5.1
-// @description  script para calcular ponto eletr√¥nico do TJRS
+// @version      1.6
+// @description  script para calcular ponto eletrÙnico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
@@ -16,8 +16,6 @@ var entradaSugerida = "09:00";
 var almIniSugerido = "12:00";
 var almFimSugerido = "13:00";
 var saidaSugerida = "18:00";
-
-var pontosSugeridos = 0;
 
 function setFields(){
 
@@ -87,7 +85,7 @@ function calculaSaldos(ajax){
         }
     );
 
-    var tdLabelSaldo = createElement("td",{'colspan':'3'},"Saldo final per√≠odo:");
+    var tdLabelSaldo = createElement("td",{'colspan':'3'},"Saldo final perÌodo:");
     var tdSaldo = createElement("td",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
         tdSaldo.style.color="red";
@@ -102,8 +100,6 @@ function calculaSaldos(ajax){
     trSaldo.insertCell().innerText = "";
     trSaldo.appendChild(tdLabelSaldo);
     trSaldo.appendChild(tdSaldo);
-
-//    htmlObject.appendChild(trSaldo);
     return htmlObject;
 }
 
@@ -113,6 +109,9 @@ function atualizaSaldo(linhaDOM){
     var linhaHora = linhaDOM.getElementsByTagName('td');
 
     var dia = linhaHora[0].innerText.trim();
+    var cargaDia = isDia7h(dia) ? 7 : 8;
+
+    var pontosSugeridos = 0;
 
     if(linhaHora[5] != null && linhaHora[5].innerText.trim() != ''){
         pontoExcedente = linhaHora[4].innerText.trim();
@@ -121,24 +120,41 @@ function atualizaSaldo(linhaDOM){
     }
 
     var entrada = linhaHora[1].innerText.trim();
-    if (linhaHora[2] == null) { addColuna(linhaDOM, ""); }
-    if (linhaHora[3] == null) { addColuna(linhaDOM, ""); }
-    if (linhaHora[4] == null) { addColuna(linhaDOM, ""); }
+    if (linhaHora[2] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
+    if (linhaHora[3] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
+    if (linhaHora[4] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
     var almIni = linhaHora[2].innerText.trim();
     var almFim = linhaHora[3].innerText.trim();
     var saida = linhaHora[4].innerText.trim();
 
-    if(horaToNum(entrada) > (11*60)){
-        saida = almFim;
-        almFim = almIni;
-        almIni = entrada;
-        entrada = entradaSugerida;
-        linhaHora[1].innerText = entradaSugerida;
-        linhaHora[1].style.color="red";
-        linhaHora[1].style.fontWeight="bold";
-		pontosSugeridos += 1;
-    }
+    if(isDia7h(dia)){
+        saida = linhaHora[2].innerText.trim();;
+        almIni = "12:00";
+        almFim = "13:00";
 
+        linhaHora[2].innerText = almIni;
+        linhaHora[2].style.color="red";
+        linhaHora[2].style.fontWeight="bold";
+        pontosSugeridos += 1;
+
+        linhaHora[3].innerText = almFim;
+        linhaHora[3].style.color="red";
+        linhaHora[3].style.fontWeight="bold";
+        pontosSugeridos += 1;
+
+        linhaHora[4].innerText = saida;
+    } else{
+        if(horaToNum(entrada) > (11*60)){
+            saida = almFim;
+            almFim = almIni;
+            almIni = entrada;
+            entrada = entradaSugerida;
+            linhaHora[1].innerText = entradaSugerida;
+            linhaHora[1].style.color="red";
+            linhaHora[1].style.fontWeight="bold";
+            pontosSugeridos += 1;
+        }
+    }
     linhaHora[2].innerText = almIni;
     linhaHora[3].innerText = almFim;
     linhaHora[4].innerText = saida;
@@ -183,13 +199,13 @@ function atualizaSaldo(linhaDOM){
     var tarde = diffHora(pt3,pt4);
     var almoco = diffHora(pt2,pt3);
 
-    var saldoDia = (manha + tarde) - (8*60);
+    var saldoDia = (manha + tarde) - (cargaDia*60);
 
     if(almoco <= 60 && almoco >= 50){
         saldoDia += almoco-60;
     } else if(almoco <= 70 && almoco >= 60){
         saldoDia -= 60-almoco;
-    } else if(almoco < 50 && ((manha + tarde) > (8*60))){
+    } else if(almoco < 50 && ((manha + tarde) > (cargaDia*60))){
         saldoDia = saldoDia-(60-almoco);
         if(saldoDia < 0) {
             saldoDia = 0;
@@ -206,18 +222,39 @@ function atualizaSaldo(linhaDOM){
 
     var hrSaldoDia = numToHora(saldoDia);
 
+    var txtSaldoDia = createElement("text",{"id":dia+"-txt5"},hrSaldoDia);
+    var tdSaldoDia = createElement("td",{"id":dia+"-td5"},txtSaldoDia);
+
     var iconFavorito;
     if(pontoExcedente){
         hrSaldoDia = hrSaldoDia;
         iconFavorito = createElement("i",{"class":"fa fa-star"},"");
+        iconFavorito.setAttribute('title','Ponto excedente ignorado nos c·lculos: ' + pontoExcedente);
+        tdSaldoDia.appendChild(iconFavorito);
     }
 
-    var txtSaldoDia = createElement("text",{"id":dia+"-txt"+"5"},hrSaldoDia);
-    var tdSaldoDia = createElement("td",{"id":dia+"-"+"5"},txtSaldoDia);
+    if(pontosSugeridos > 1 || isDia7h(dia)){
+        var icon7h
+        if(isDia7h(dia)){
+            icon7h = createElement("spam",{"class":"fa fa-check-square-o"},"");
+            icon7h.setAttribute('title','Alternar para dia com 8h');
+        } else {
+            icon7h = createElement("spam",{"class":"fa fa-square-o"},"");
+            icon7h.setAttribute('title','Alternar para dia com 7h');
+        }
 
-    if(pontoExcedente){
-        tdSaldoDia.setAttribute('title','Ponto excedente ignorado nos c√°lculos: ' + pontoExcedente);
-        tdSaldoDia.appendChild(iconFavorito);
+        icon7h.addEventListener("click",
+            function (){
+                var dia7h = localStorage.getItem(dia);
+                if(dia7h != null && dia7h != ''){
+                    localStorage.removeItem(dia);
+                } else {
+                    localStorage.setItem(dia, 7);
+                }
+                document.getElementById('ponto-eletronico-search-btnconsultar').click();
+            }
+        );
+        tdSaldoDia.appendChild(icon7h);
     }
 
     if(saldoDia < 0){
@@ -229,6 +266,25 @@ function atualizaSaldo(linhaDOM){
     tdSaldoDia.style.fontWeight="bold";
 
     return tdSaldoDia;
+}
+
+function alterna7h(dia){
+    var dia7h = localStorage.getItem(dia);
+    if(dia7h != null && dia7h != ''){
+        localStorage.removeItem(dia);
+    } else {
+        localStorage.setItem(dia, 7);
+    }
+    document.getElementById('ponto-eletronico-search-btnconsultar').click();
+}
+
+function isDia7h(dia){
+    var dia7h = localStorage.getItem(dia);
+    if(dia7h != null && dia7h != ''){
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function getLastDayOfMonth(dt) {
