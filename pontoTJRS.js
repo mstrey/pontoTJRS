@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Ponto Eletrônico TJRS (DEV)
+// @name         Ponto EletrÃ´nico TJRS (DEV)
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
 // @version      1.6
-// @description  script para calcular ponto eletrônico do TJRS
+// @description  script para calcular ponto eletrÃ´nico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
@@ -85,7 +85,7 @@ function calculaSaldos(ajax){
         }
     );
 
-    var tdLabelSaldo = createElement("td",{'colspan':'3'},"Saldo final período:");
+    var tdLabelSaldo = createElement("td",{'colspan':'3'},"Saldo final perÃ­odo:");
     var tdSaldo = createElement("td",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
         tdSaldo.style.color="red";
@@ -229,7 +229,7 @@ function atualizaSaldo(linhaDOM){
     if(pontoExcedente){
         hrSaldoDia = hrSaldoDia;
         iconFavorito = createElement("i",{"class":"fa fa-star"},"");
-        iconFavorito.setAttribute('title','Ponto excedente ignorado nos cálculos: ' + pontoExcedente);
+        iconFavorito.setAttribute('title','Ponto excedente ignorado nos cï¿½lculos: ' + pontoExcedente);
         tdSaldoDia.appendChild(iconFavorito);
     }
 
