@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Ponto Eletrônico TJRS (DEV)
+// @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.6.1
+// @version      1.6.2
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
@@ -129,8 +129,14 @@ function atualizaSaldo(linhaDOM){
 
     if(cargaDia < 8){
         saida = linhaHora[2].innerText.trim();;
-        almIni = "12:00";
-        almFim = "13:00";
+
+        if(horaToNum(entrada) > (12*60)){// se entrada depois do meio dia
+            almIni = numToHora(horaToNum(entrada)+60); //
+            almFim = numToHora(horaToNum(almIni)+60);
+        } else {
+            almIni = "12:00";
+            almFim = "13:00";
+        }
 
         linhaHora[2].innerText = almIni;
         linhaHora[2].style.color="red";
@@ -225,14 +231,20 @@ function atualizaSaldo(linhaDOM){
         saldoPeriodo = 0;
     }
 
+    var tdSaldoDia = createElement("td",{"id":dia+"-td5"},"");
     var hrSaldoDia = numToHora(saldoDia);
-
     var txtSaldoDia = createElement("text",{"id":dia+"-txt5"},hrSaldoDia);
-    var tdSaldoDia = createElement("td",{"id":dia+"-td5"},txtSaldoDia);
+    tdSaldoDia.appendChild(txtSaldoDia);
+
+    var txtCargaDia = "";
+    if(cargaDia != 8){
+        txtCargaDia = createElement("text",{}," ("+cargaDia+"hs)");
+        tdSaldoDia.appendChild(txtCargaDia);
+    }
+
 
     var iconFavorito;
     if(pontoExcedente){
-        hrSaldoDia = hrSaldoDia;
         iconFavorito = createElement("i",{"class":"fa fa-star"},"");
         iconFavorito.setAttribute('title','Ponto excedente ignorado nos cálculos: ' + pontoExcedente);
         tdSaldoDia.appendChild(iconFavorito);
