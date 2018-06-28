@@ -219,7 +219,6 @@ function atualizaSaldo(linhaDOM){
 
     saldoPeriodo += saldoDia;
 
-    console.log(dia+' / '+cargaDia+' / '+tempoAlmoco+' / '+almoco+' / '+saldoPeriodo+' / '+saldoDia)
     if(sugereSaida && saldoPeriodo < 0){
         linhaHora[4].innerText = numToHora(horaToNum(saidaSugerida)-saldoPeriodo);
         saldoDia = 0;
