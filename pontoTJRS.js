@@ -2,13 +2,14 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.6.2
+// @version      1.6.3
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
 //
 // ==/UserScript==
+
 
 var matricula;
 var saldoPeriodo = 0;
@@ -252,27 +253,30 @@ function atualizaSaldo(linhaDOM){
 
     if(pontosSugeridos > 1 || cargaDia < 8){
         var iconDiaEspecial
-        if(cargaDia == 6){
-            iconDiaEspecial = createElement("spam",{"class":"fa fa-check-square"},"");
-            iconDiaEspecial.setAttribute('title','Alternar para dia com 8h');
-        } else if(cargaDia == 7){
-            iconDiaEspecial = createElement("spam",{"class":"fa fa-check-square-o"},"");
-            iconDiaEspecial.setAttribute('title','Alternar para dia com 6h');
-        } else {
+        if(cargaDia == 8){
             iconDiaEspecial = createElement("spam",{"class":"fa fa-square-o"},"");
             iconDiaEspecial.setAttribute('title','Alternar para dia com 7h');
+        } else if(cargaDia == 7){
+            iconDiaEspecial = createElement("spam",{"class":"fa fa-square"},"");
+            iconDiaEspecial.setAttribute('title','Alternar para dia com 6h');
+        } else if(cargaDia == 6){
+            iconDiaEspecial = createElement("spam",{"class":"fa fa-check-square-o"},"");
+            iconDiaEspecial.setAttribute('title','Alternar para dia com 5h');
+        } else {
+            iconDiaEspecial = createElement("spam",{"class":"fa fa-check-square"},"");
+            iconDiaEspecial.setAttribute('title','Alternar para dia com 8h');
         }
 
         iconDiaEspecial.addEventListener("click",
             function (){
-                if(cargaDia != null && cargaDia != ''){
-                    if(cargaDia == 7){
-                        localStorage.setItem(dia, 6);
-                    } else {
-                        localStorage.removeItem(dia);
-                    }
-                } else {
+                if(cargaDia == 8 ){
                     localStorage.setItem(dia, 7);
+                } else if(cargaDia == 7){
+                    localStorage.setItem(dia, 6);
+                } else if(cargaDia == 6){
+                    localStorage.setItem(dia, 5);
+                } else {
+                    localStorage.removeItem(dia);
                 }
                 document.getElementById('ponto-eletronico-search-btnconsultar').click();
             }
