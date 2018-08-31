@@ -2,17 +2,16 @@
 // @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.6.3
+// @version      1.6.4
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
 //
 // ==/UserScript==
-
-
 var matricula;
 var saldoPeriodo = 0;
+var pontosManuais = 0;
 var entradaSugerida = "09:00";
 var almIniSugerido = "12:00";
 var almFimSugerido = "13:00";
@@ -71,6 +70,7 @@ function setFields(){
 }
 
 function calculaSaldos(ajax){
+    console.clear();
     var htmlObject = createElement("div",{},"");
     htmlObject.innerHTML = ajax;
     var listaDias = htmlObject.getElementsByClassName("odd/even");
@@ -86,7 +86,7 @@ function calculaSaldos(ajax){
         }
     );
 
-    var tdLabelSaldo = createElement("td",{'colspan':'3'},"Saldo final período:");
+    var tdLabelSaldo = createElement("td",{'colspan':'2'},"Saldo final período:");
     var tdSaldo = createElement("td",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
         tdSaldo.style.color="red";
@@ -99,6 +99,7 @@ function calculaSaldos(ajax){
     var trSaldo = listaDias[0].parentNode.lastChild;
     trSaldo.insertCell().innerText = "";
     trSaldo.insertCell().innerText = "";
+    trSaldo.insertCell().innerText = "";
     trSaldo.appendChild(tdLabelSaldo);
     trSaldo.appendChild(tdSaldo);
     return htmlObject;
@@ -107,23 +108,50 @@ function calculaSaldos(ajax){
 function atualizaSaldo(linhaDOM){
 
     var pontoExcedente = 0;
-    var linhaHora = linhaDOM.getElementsByTagName('td');
+    var linhaHora = linhaDOM.children;
 
     var dia = linhaHora[0].innerText.trim();
     var cargaDia = getCargaDia(dia);
 
     var pontosSugeridos = 0;
 
-    if(linhaHora[5] != null && linhaHora[5].innerText.trim() != ''){
+    var entrada = linhaHora[1].innerText.trim();
+    linhaHora[1].innerText = entrada;
+
+    if (linhaHora[2] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
+    if (linhaHora[3] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
+    if (linhaHora[4] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
+    if (linhaHora[5] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
+
+    var tempoMinimoAlmoco = 10;
+
+    if((horaToNum(linhaHora[2].innerText.trim())-horaToNum(linhaHora[1].innerText.trim())) < tempoMinimoAlmoco){
+        pontoExcedente = linhaHora[2].innerText.trim();
+        linhaHora[2].innerText = linhaHora[3].innerText.trim();
+        linhaHora[3].innerText = linhaHora[4].innerText.trim();
+        linhaHora[4].innerText = linhaHora[5].innerText.trim();
+        linhaHora[5].innerText = '';
+    }
+
+    if((horaToNum(linhaHora[3].innerText.trim())-horaToNum(linhaHora[2].innerText.trim())) < tempoMinimoAlmoco){
+        pontoExcedente = linhaHora[3].innerText.trim();
+        linhaHora[3].innerText = linhaHora[4].innerText.trim();
+        linhaHora[4].innerText = linhaHora[5].innerText.trim();
+        linhaHora[5].innerText = '';
+    }
+
+    if((horaToNum(linhaHora[4].innerText.trim())-horaToNum(linhaHora[3].innerText.trim())) < tempoMinimoAlmoco){
+        pontoExcedente = linhaHora[4].innerText.trim();
+        linhaHora[4].innerText = linhaHora[5].innerText.trim();
+        linhaHora[5].innerText = '';
+    }
+
+    if(linhaHora[5].innerText.trim() != ''){
         pontoExcedente = linhaHora[4].innerText.trim();
         linhaHora[4].innerText = linhaHora[5].innerText.trim();
         linhaHora[5].innerText = "";
     }
 
-    var entrada = linhaHora[1].innerText.trim();
-    if (linhaHora[2] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
-    if (linhaHora[3] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
-    if (linhaHora[4] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
     var almIni = linhaHora[2].innerText.trim();
     var almFim = linhaHora[3].innerText.trim();
     var saida = linhaHora[4].innerText.trim();
@@ -172,21 +200,21 @@ function atualizaSaldo(linhaDOM){
         linhaHora[1].innerText = entradaSugerida;
         linhaHora[1].style.color="red";
         linhaHora[1].style.fontWeight="bold";
-		pontosSugeridos += 1;
+        pontosSugeridos += 1;
     }
 
     if(linhaHora[2].innerText.trim() == ""){
         linhaHora[2].innerText = almIniSugerido;
         linhaHora[2].style.color="red";
         linhaHora[2].style.fontWeight="bold";
-		pontosSugeridos += 1;
+        pontosSugeridos += 1;
     }
 
     if(linhaHora[3].innerText.trim() == ""){
         linhaHora[3].innerText = almFimSugerido;
         linhaHora[3].style.color="red";
         linhaHora[3].style.fontWeight="bold";
-   		pontosSugeridos += 1;
+        pontosSugeridos += 1;
     }
 
     if(linhaHora[4].innerText.trim() == ""){
@@ -201,6 +229,30 @@ function atualizaSaldo(linhaDOM){
     var pt2 = linhaHora[2].innerText.trim();
     var pt3 = linhaHora[3].innerText.trim();
     var pt4 = linhaHora[4].innerText.trim();
+
+    var iconPonto = getIconPonto(dia, 1);
+    var txtHora = createElement("text",{"id":dia+"-txt1"},pt1);
+    var tdHora = createElement("td",{"id":dia+"-td1"},"");
+
+    tdHora.appendChild(txtHora);
+    tdHora.appendChild(iconPonto);
+
+    linhaHora[1].innerHtml = tdHora;
+
+    tdHora = createElement("td",{"id":dia+"-td2"},pt2);
+    iconPonto = getIconPonto(dia, 2);
+    tdHora.appendChild(iconPonto);
+    linhaHora[2].innerHtml = tdHora;
+
+    tdHora = createElement("td",{"id":dia+"-td3"},pt3);
+    iconPonto = getIconPonto(dia, 3);
+    tdHora.appendChild(iconPonto);
+    linhaHora[3].innerHtml = tdHora;
+
+    tdHora = createElement("td",{"id":dia+"-td4"},pt4);
+    iconPonto = getIconPonto(dia, 4);
+    tdHora.appendChild(iconPonto);
+    linhaHora[4].innerHtml = tdHora;
 
     var manha = diffHora(pt1,pt2);
     var tarde = diffHora(pt3,pt4);
@@ -239,10 +291,8 @@ function atualizaSaldo(linhaDOM){
 
     var txtCargaDia = "";
     if(cargaDia != 8){
-        txtCargaDia = createElement("text",{}," ("+cargaDia+"hs)");
-        tdSaldoDia.appendChild(txtCargaDia);
+        tdSaldoDia = createElement("td",{},hrSaldoDia+" ("+cargaDia+"hs)");
     }
-
 
     var iconFavorito;
     if(pontoExcedente){
@@ -302,6 +352,42 @@ function getCargaDia(dia){
     } else {
         return 8;
     }
+}
+
+function getIconPonto(dia, i){
+    var iconPonto;
+    if(isPontoManual(dia, i)){
+        console.log("manual: ");
+        iconPonto = createElement("spam",{"class":"fa fa-pencil"},"M");
+        iconPonto.setAttribute('title','Horário registrado manualmente na planilha. Clique para alternar para ponto automático.');
+    } else {
+        console.log("automatico: ");
+        iconPonto = createElement("spam",{"class":"fa fa-pencil"},"A");
+        iconPonto.setAttribute('title','Horário registrado eletronicamente. Clique para alternar para ponto em planilha manual.');
+    }
+    iconPonto.addEventListener("click",
+        function (){
+            if(isPontoManual(dia, i)){
+                setPontoManual(dia, i, false);
+            } else {
+                setPontoManual(dia, i, true);
+            }
+            document.getElementById('ponto-eletronico-search-btnconsultar').click();
+        }
+    );
+    return iconPonto;
+}
+function isPontoManual(dia, idx){
+    var bolManual = localStorage.getItem(dia+idx);
+    if(bolManual != null){
+        return bolManual;
+    } else {
+        return false;
+    }
+}
+
+function setPontoManual(dia, idx, bol){
+    localStorage.setItem(dia+'-'+idx, bol);
 }
 
 function getLastDayOfMonth(dt) {
