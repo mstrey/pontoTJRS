@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Ponto Eletrônico TJRS
+// @name         Ponto EletrÃ´nico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
 // @version      1.6.4
-// @description  script para calcular ponto eletrônico do TJRS
+// @description  script para calcular ponto eletrï¿½nico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
@@ -86,7 +86,7 @@ function calculaSaldos(ajax){
         }
     );
 
-    var tdLabelSaldo = createElement("td",{'colspan':'2'},"Saldo final período:");
+    var tdLabelSaldo = createElement("td",{'colspan':'2'},"Saldo final perï¿½odo:");
     var tdSaldo = createElement("td",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
         tdSaldo.style.color="red";
@@ -183,7 +183,6 @@ function atualizaSaldo(linhaDOM){
             saida = almFim;
             almFim = almIni;
             almIni = entrada;
-            entrada = entradaSugerida;
             linhaHora[1].innerText = entradaSugerida;
             linhaHora[1].style.color="red";
             linhaHora[1].style.fontWeight="bold";
@@ -297,7 +296,7 @@ function atualizaSaldo(linhaDOM){
     var iconFavorito;
     if(pontoExcedente){
         iconFavorito = createElement("i",{"class":"fa fa-star"},"");
-        iconFavorito.setAttribute('title','Ponto excedente ignorado nos cálculos: ' + pontoExcedente);
+        iconFavorito.setAttribute('title','Ponto excedente ignorado nos cÃ¡lculos: ' + pontoExcedente);
         tdSaldoDia.appendChild(iconFavorito);
     }
 
@@ -359,11 +358,11 @@ function getIconPonto(dia, i){
     if(isPontoManual(dia, i)){
         console.log("manual: ");
         iconPonto = createElement("spam",{"class":"fa fa-pencil"},"M");
-        iconPonto.setAttribute('title','Horário registrado manualmente na planilha. Clique para alternar para ponto automático.');
+        iconPonto.setAttribute('title','HorÃ¡rio registrado manualmente na planilha. Clique para alternar para ponto automÃ¡tico.');
     } else {
         console.log("automatico: ");
         iconPonto = createElement("spam",{"class":"fa fa-pencil"},"A");
-        iconPonto.setAttribute('title','Horário registrado eletronicamente. Clique para alternar para ponto em planilha manual.');
+        iconPonto.setAttribute('title','HorÃ¡rio registrado eletronicamente. Clique para alternar para ponto em planilha manual.');
     }
     iconPonto.addEventListener("click",
         function (){
