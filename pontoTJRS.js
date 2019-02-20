@@ -2,7 +2,7 @@
 // @name         Ponto Eletrônico TJRS (DEV)
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.6.6
+// @version      1.6.6.1
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
@@ -288,7 +288,7 @@ function atualizaSaldo(linhaDOM){
         var iconDiaEspecial
         iconDiaEspecial = createElement("spam",{"class":"fa fa-refresh"}," ");
         if(cargaDia == 6 || cargaDia == 7 || cargaDia == 8){
-            iconDiaEspecial.setAttribute('title','Alternar para dia com '+cargaDia-1+'h');
+            iconDiaEspecial.setAttribute('title','Alternar para dia com '+(cargaDia-1)+'h');
         } else {
             iconDiaEspecial.setAttribute('title','Alternar para dia com 8h');
         }
