@@ -1,14 +1,16 @@
 // ==UserScript==
-// @name         Ponto Eletrônico TJRS
+// @name         Ponto Eletrônico TJRS (DEV)
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.6.5
-// @description  script para calcular ponto eletr�nico do TJRS
+// @version      1.6.6
+// @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
 // @grant        none
 //
 // ==/UserScript==
+
+
 var matricula;
 var saldoPeriodo = 0;
 var pontosManuais = 0;
@@ -86,7 +88,7 @@ function calculaSaldos(ajax){
         }
     );
 
-    var tdLabelSaldo = createElement("td",{'colspan':'2'},"Saldo final per�odo:");
+    var tdLabelSaldo = createElement("td",{'colspan':'2'},"Saldo final período:");
     var tdSaldo = createElement("td",{},numToHora(saldoPeriodo));
     if(saldoPeriodo < 0){
         tdSaldo.style.color="red";
@@ -107,8 +109,14 @@ function calculaSaldos(ajax){
 
 function atualizaSaldo(linhaDOM){
 
+    var i;
     var pontoExcedente = 0;
     var linhaHora = linhaDOM.children;
+
+    for(i=2; i<=5; i++){
+        if (linhaHora[i] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
+    }
+    linhaHora = linhaDOM.children;
 
     var dia = linhaHora[0].innerText.trim();
     var cargaDia = getCargaDia(dia);
@@ -118,38 +126,13 @@ function atualizaSaldo(linhaDOM){
     var entrada = linhaHora[1].innerText.trim();
     linhaHora[1].innerText = entrada;
 
-    if (linhaHora[2] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
-    if (linhaHora[3] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
-    if (linhaHora[4] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
-    if (linhaHora[5] == null) { linhaDOM.appendChild(createElement("td",{},"")); }
-
     var tempoMinimoAlmoco = 10;
 
-    if((horaToNum(linhaHora[2].innerText.trim())-horaToNum(linhaHora[1].innerText.trim())) < tempoMinimoAlmoco){
-        pontoExcedente = linhaHora[2].innerText.trim();
-        linhaHora[2].innerText = linhaHora[3].innerText.trim();
-        linhaHora[3].innerText = linhaHora[4].innerText.trim();
-        linhaHora[4].innerText = linhaHora[5].innerText.trim();
-        linhaHora[5].innerText = '';
-    }
-
-    if((horaToNum(linhaHora[3].innerText.trim())-horaToNum(linhaHora[2].innerText.trim())) < tempoMinimoAlmoco){
-        pontoExcedente = linhaHora[3].innerText.trim();
-        linhaHora[3].innerText = linhaHora[4].innerText.trim();
-        linhaHora[4].innerText = linhaHora[5].innerText.trim();
-        linhaHora[5].innerText = '';
-    }
-
-    if((horaToNum(linhaHora[4].innerText.trim())-horaToNum(linhaHora[3].innerText.trim())) < tempoMinimoAlmoco){
-        pontoExcedente = linhaHora[4].innerText.trim();
-        linhaHora[4].innerText = linhaHora[5].innerText.trim();
-        linhaHora[5].innerText = '';
-    }
-
-    if(linhaHora[5].innerText.trim() != ''){
-        pontoExcedente = linhaHora[4].innerText.trim();
-        linhaHora[4].innerText = linhaHora[5].innerText.trim();
-        linhaHora[5].innerText = "";
+    for(i=5; i>=2; i--){
+        if((horaToNum(linhaHora[i].innerText.trim())-horaToNum(linhaHora[i-1].innerText.trim())) < tempoMinimoAlmoco){
+            pontoExcedente = linhaHora[i].innerText.trim();
+            linhaHora[i].innerText = i < 5 ? linhaHora[i+1].innerText.trim() : '';
+        }
     }
 
     var almIni = linhaHora[2].innerText.trim();
@@ -183,6 +166,7 @@ function atualizaSaldo(linhaDOM){
             saida = almFim;
             almFim = almIni;
             almIni = entrada;
+            entrada = entradaSugerida;
             linhaHora[1].innerText = entradaSugerida;
             linhaHora[1].style.color="red";
             linhaHora[1].style.fontWeight="bold";
@@ -210,7 +194,7 @@ function atualizaSaldo(linhaDOM){
     }
 
     if(linhaHora[3].innerText.trim() == ""){
-        linhaHora[3].innerText = almFimSugerido;
+        linhaHora[3].innerText = numToHora(horaToNum(linhaHora[2].innerText)+60);
         linhaHora[3].style.color="red";
         linhaHora[3].style.fontWeight="bold";
         pontosSugeridos += 1;
@@ -302,28 +286,17 @@ function atualizaSaldo(linhaDOM){
 
     if(pontosSugeridos > 1 || cargaDia < 8){
         var iconDiaEspecial
-        if(cargaDia == 8){
-            iconDiaEspecial = createElement("spam",{"class":"fa fa-square-o"},"");
-            iconDiaEspecial.setAttribute('title','Alternar para dia com 7h');
-        } else if(cargaDia == 7){
-            iconDiaEspecial = createElement("spam",{"class":"fa fa-square"},"");
-            iconDiaEspecial.setAttribute('title','Alternar para dia com 6h');
-        } else if(cargaDia == 6){
-            iconDiaEspecial = createElement("spam",{"class":"fa fa-check-square-o"},"");
-            iconDiaEspecial.setAttribute('title','Alternar para dia com 5h');
+        iconDiaEspecial = createElement("spam",{"class":"fa fa-refresh"}," ");
+        if(cargaDia == 6 || cargaDia == 7 || cargaDia == 8){
+            iconDiaEspecial.setAttribute('title','Alternar para dia com '+cargaDia-1+'h');
         } else {
-            iconDiaEspecial = createElement("spam",{"class":"fa fa-check-square"},"");
             iconDiaEspecial.setAttribute('title','Alternar para dia com 8h');
         }
 
         iconDiaEspecial.addEventListener("click",
             function (){
-                if(cargaDia == 8 ){
-                    localStorage.setItem(dia, 7);
-                } else if(cargaDia == 7){
-                    localStorage.setItem(dia, 6);
-                } else if(cargaDia == 6){
-                    localStorage.setItem(dia, 5);
+        		if(cargaDia == 6 || cargaDia == 7 || cargaDia == 8){
+                    localStorage.setItem(dia, cargaDia-1);
                 } else {
                     localStorage.removeItem(dia);
                 }
@@ -356,11 +329,10 @@ function getCargaDia(dia){
 function getIconPonto(dia, i){
     var iconPonto;
     if(isPontoManual(dia, i)){
-        console.log("manual: ");
+        console.log("manual: "+dia+' > '+i);
         iconPonto = createElement("spam",{"class":"fa fa-pencil"},"M");
         iconPonto.setAttribute('title','Horário registrado manualmente na planilha. Clique para alternar para ponto automático.');
     } else {
-        console.log("automatico: ");
         iconPonto = createElement("spam",{"class":"fa fa-pencil"},"A");
         iconPonto.setAttribute('title','Horário registrado eletronicamente. Clique para alternar para ponto em planilha manual.');
     }
