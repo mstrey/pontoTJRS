@@ -2,7 +2,7 @@
 // @name         Ponto Eletrônico TJRS (DEV)
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
-// @version      1.6.6.1
+// @version      1.6.7
 // @description  script para calcular ponto eletrônico do TJRS
 // @author       mstrey
 // @match        https://www.tjrs.jus.br/novo/servicos/gestao-de-pessoas/ponto-eletronico/
