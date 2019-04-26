@@ -28,7 +28,9 @@ function setFields(){
     $('#ponto-eletronico-search-dtini').datepicker( 'setDate', getFirstDayOfMonth(new Date()) );
     $('#ponto-eletronico-search-dtfim').datepicker( 'setDate', getLastDayOfMonth(new Date()) );
 
+    $('#ponto-eletronico-search-btnconsultar').off('click');
     $('#ponto-eletronico-search-btnconsultar').click(function(event) {
+        event.preventDefault();
     	matricula = document.getElementById("ponto-eletronico-search-txtmat").value;
         if (typeof(Storage) !== "undefined") {
         	if (matricula == "") {
