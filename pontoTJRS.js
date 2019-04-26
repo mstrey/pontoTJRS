@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Ponto Eletrônico TJRS (DEV)
+// @name         Ponto Eletrônico TJRS
 // @namespace    http://tampermonkey.net/
 // @supportURL   https://github.com/mstrey/pontoTJRS/issues
 // @version      1.6.7
